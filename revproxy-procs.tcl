@@ -35,8 +35,8 @@ namespace eval ::revproxy {
     #
     # By default, headers method and request body will be those of the
     # current request. One can craft a custom request to be forwarded
-    # to the backend overriding these parameters via the "method",
-    # "content" / "contentfile" and "queryHeaders" flags.
+    # to the backend overriding these parameters via the "content" /
+    # "contentfile" and "queryHeaders" flags.
     #
 
     nsf::proc upstream {
@@ -51,7 +51,6 @@ namespace eval ::revproxy {
         {-url_rewrite_callback "::revproxy::rewrite_url"}
         {-backend_reply_callback ""}
         {-backendconnection ""}
-        {-method ""}
         {-content ""}
         {-contentfile ""}
         {-headers ""}
@@ -155,10 +154,6 @@ namespace eval ::revproxy {
             ns_set iupdate $queryHeaders x-ssl-request 1
         }
 
-        if {$method eq ""} {
-            set method [ns_conn method]
-        }
-
         set contentType [ns_set iget $queryHeaders content-type]
         set binary [expr {$contentType ne "" && [ns_encodingfortype $contentType] eq "binary"}]
 
@@ -188,7 +183,7 @@ namespace eval ::revproxy {
                     -validation_callback $validation_callback \
                     -exception_callback $exception_callback \
                     -backend_reply_callback $backend_reply_callback \
-                    -method $method \
+                    -method $when \
                     -content $content \
                     -contentfile $contentfile \
                     -queryHeaders $queryHeaders \
