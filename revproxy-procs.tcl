@@ -53,7 +53,7 @@ namespace eval ::revproxy {
         {-backendconnection ""}
         {-content ""}
         {-contentfile ""}
-        {-headers ""}
+        {-queryHeaders ""}
     } {
 
         if {$backendconnection eq ""} {
