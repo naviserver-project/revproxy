@@ -32,6 +32,12 @@ namespace eval ::revproxy {
     #
     # Serve the requested file from an upstream server, which might be
     # an HTTP or HTTPS server.
+    #
+    # By default, headers method and request body will be those of the
+    # current request. One can craft a custom request to be forwarded
+    # to the backend overriding these parameters via the "method",
+    # "content" / "contentfile" and "queryHeaders" flags.
+    #
 
     nsf::proc upstream {
         when
@@ -45,6 +51,10 @@ namespace eval ::revproxy {
         {-url_rewrite_callback "::revproxy::rewrite_url"}
         {-backend_reply_callback ""}
         {-backendconnection ""}
+        {-method ""}
+        {-content ""}
+        {-contentfile ""}
+        {-headers ""}
     } {
 
         if {$backendconnection eq ""} {
@@ -130,7 +140,9 @@ namespace eval ::revproxy {
         # Get header fields from request, add x-forwarded-for,
         # x-forwarded-proto, and x-ssl-request (if appropriate).
         #
-        set queryHeaders [ns_conn headers]
+        if {$queryHeaders eq ""} {
+            set queryHeaders [ns_conn headers]
+        }
 
         set XForwardedFor [split [ns_set iget $queryHeaders "x-forwarded-for" ""] " ,"]
         set XForwardedFor [lmap e $XForwardedFor {if {$e eq ""} continue}]
@@ -141,6 +153,27 @@ namespace eval ::revproxy {
         ns_set iupdate $queryHeaders x-forwarded-proto $proto
         if {$proto eq "https"} {
             ns_set iupdate $queryHeaders x-ssl-request 1
+        }
+
+        if {$method eq ""} {
+            set method [ns_conn method]
+        }
+
+        set contentType [ns_set iget $queryHeaders content-type]
+        set binary [expr {$contentType ne "" && [ns_encodingfortype $contentType] eq "binary"}]
+
+        if {$content ne ""} {
+            ns_set iupdate $queryHeaders content-length [string length $content]
+        } elseif {$binary} {
+            set content [ns_conn content -binary]
+        } else {
+            set content [ns_conn content]
+        }
+
+        if {$contentfile ne ""} {
+            ns_set iupdate $queryHeaders content-length [file size $contentfile]
+        } else {
+            set contentfile [ns_conn contentfile]
         }
 
         #
@@ -155,6 +188,10 @@ namespace eval ::revproxy {
                     -validation_callback $validation_callback \
                     -exception_callback $exception_callback \
                     -backend_reply_callback $backend_reply_callback \
+                    -method $method \
+                    -content $content \
+                    -contentfile $contentfile \
+                    -queryHeaders $queryHeaders \
                    ]
     }
 
