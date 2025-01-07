@@ -1,8 +1,17 @@
 # Reverse Proxy Module for NaviServer
 
-**Release 0.21**
+**Version 0.21**
 
 *Author: neumann@wu-wien.ac.at*
+
+---
+
+** Notice:** Starting with Version 0.22, the revproxy module is
+already included in NaviServer version 5. A `make install` operation
+for such versions is a dummy operation to avoid overwriting with older
+versions.
+
+---
 
 The **revproxy** module provides a reverse proxy solution for NaviServer. It allows you to forward incoming requests to one or more backend systems. Both incoming and upstream connections can be handled via HTTP or HTTPS, and WebSocket (including secure WebSocket) connections are supported.
 
