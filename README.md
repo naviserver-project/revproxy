@@ -9,7 +9,7 @@
 ** Notice:** Starting with Version 0.22, the revproxy module is
 already included in NaviServer version 5. A `make install` operation
 for such versions is a dummy operation to avoid overwriting with older
-versions.
+versions. Version 0.23 of the module uses NaviServer 5 commands.
 
 ---
 
