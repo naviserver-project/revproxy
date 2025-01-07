@@ -751,6 +751,25 @@ namespace eval ::revproxy::ns_connchan {
                 set received_connection     [ns_set iget $replyHeaders connection ""]
                 set received_content_length [ns_set iget $replyHeaders content-length ""]
 
+                if {$received_content_length eq "" || $received_content_length eq "0"} {
+                    #
+                    # In case there is (potentially) no content, send
+                    # the received upstream headers now, since the
+                    # read callback on this socket might not be
+                    # triggered anymore.
+                    #
+                    {*}$cmd
+                    set cmd ""
+                } else {
+                    #
+                    # Otherwise, delay cmd until we receive some data
+                    # via callback in revproxy::ns_connchan::spool.
+                    # We need to delay cmd to be able to report to the
+                    # client a potential timeout with the appropriate
+                    # status code. Otherwise, it would be too late.
+                    #
+                }
+
                 if {$received_content_length eq "" && $received_connection eq "close"} {
                     #
                     # Assume streaming HTML
