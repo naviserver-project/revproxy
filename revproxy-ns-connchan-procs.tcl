@@ -26,6 +26,10 @@ namespace eval ::revproxy::ns_connchan {
         {-exception_callback "::revproxy::exception"}
         {-url_rewrite_callback "::revproxy::rewrite_url"}
         {-backend_reply_callback ""}
+        -method
+        -content
+        -contentfile
+        -queryHeaders
     } {
         #
         # Inject a "connection close" instruction to avoid persistent
@@ -37,7 +41,6 @@ namespace eval ::revproxy::ns_connchan {
         #
         # We might have to take more precautions for WebSockets here.
         #
-        set queryHeaders [ns_conn headers]
         ns_set iupdate $queryHeaders connection close
 
         #ns_log notice queryHeaders=[ns_set array $queryHeaders]
@@ -63,7 +66,7 @@ namespace eval ::revproxy::ns_connchan {
             #
             set backendChan [ns_connchan open \
                                  {*}$unixSocketArg \
-                                 -method [ns_conn method] \
+                                 -method $method \
                                  -headers $queryHeaders \
                                  -timeout $timeout \
                                  -version [ns_conn version] \
@@ -73,20 +76,18 @@ namespace eval ::revproxy::ns_connchan {
             #
             set contentLength [ns_set iget $queryHeaders content-length {}]
             if {$contentLength ne ""} {
-                set contentfile [ns_conn contentfile]
                 set chunk 16000
                 if {$contentfile eq ""} {
                     #
                     # string content
                     #
-                    set data [ns_conn content -binary]
-                    set length [string length $data]
+                    set length $contentLength
                     set i 0
                     set j [expr {$chunk -1}]
                     while {$i < $length} {
                         log notice "upstream: send max $chunk bytes from string to $backendChan " \
                             "(length $contentLength)"
-                        ns_connchan write -buffered $backendChan [string range $data $i $j]
+                        ns_connchan write -buffered $backendChan [string range $content $i $j]
                         incr i $chunk
                         incr j $chunk
                     }

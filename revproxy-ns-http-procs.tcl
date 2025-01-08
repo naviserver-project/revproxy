@@ -13,6 +13,10 @@ namespace eval ::revproxy::ns_http {
         {-validation_callback ""}
         {-exception_callback "::revproxy::exception"}
         {-backend_reply_callback ""}
+        -method
+        -content
+        -contentfile
+        -queryHeaders
     } {
         #
         # Now perform the transmission... but before this, call the
@@ -24,11 +28,10 @@ namespace eval ::revproxy::ns_http {
             {*}$validation_callback -url $url
         }
 
-        set queryHeaders [ns_conn headers]
         set binary false
         set extraArgs {}
 
-        switch [ns_conn method] {
+        switch $method {
             PUT -
             POST {
                 set contentType [ns_set iget $queryHeaders content-type]
@@ -36,13 +39,10 @@ namespace eval ::revproxy::ns_http {
                     && [ns_encodingfortype $contentType] eq "binary"} {
                     set binary true
                 }
-                set contentfile [ns_conn contentfile]
                 if {$contentfile ne ""} {
                     lappend extraArgs -body_file $contentfile
-                } elseif {$binary} {
-                    lappend extraArgs -body [ns_conn content -binary]
                 } else {
-                    lappend extraArgs -body [ns_conn content]
+                    lappend extraArgs -body $content
                 }
             }
             default {}
